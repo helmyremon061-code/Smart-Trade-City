@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>مدينة التجارة الذكية | Smart Trade City</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(145deg, #0a2f2f 0%, #052020 100%);
+            color: #e0f2f1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .app-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            border-radius: 32px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        h1 { text-align: center; color: #ffd966; margin-bottom: 10px; font-size: 1.8rem; }
+        .btn {
+            background: #3b82f6;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 60px;
+            color: white;
+            font-weight: bold;
+            width: 100%;
+            margin: 8px 0;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+        .buy { background: #10b981; }
+        .sell { background: #ef4444; }
+        .small { width: auto; padding: 6px 12px; font-size: 0.8rem; }
+        .hidden { display: none; }
+        .card {
+            background: rgba(30, 58, 58, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            padding: 16px;
+            margin: 16px 0;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .balance-card p { font-size: 2rem; color: #facc15; text-align: center; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 16px 0;
+        }
+        .market-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #2c4f4f;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border-radius: 40px;
+            border: none;
+            background: #2c4f4f;
+            color: white;
+        }
+        .flex { display: flex; gap: 10px; }
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0;
+        }
+        .tab-btn {
+            background: rgba(51,65,85,0.7);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 40px;
+            color: #cbd5e1;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .tab-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 280px;
+            height: 100%;
+            background: rgba(15,23,42,0.95);
+            backdrop-filter: blur(16px);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: 0.3s;
+            padding: 20px;
+            overflow-y: auto;
+            border-left: 1px solid rgba(255,255,255,0.1);
+        }
+        .sidebar.open { transform: translateX(0); }
+        .sidebar a {
+            display: block;
+            padding: 12px;
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            margin: 5px 0;
+            font-size: 0.9rem;
+        }
+        .sidebar a i { margin-left: 10px; width: 24px; }
+        .sidebar a:hover { background: #3b82f6; }
+        .menu-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3b82f6;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            padding: 8px 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 1100;
+        }
+        .chatbot-toggle {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            background: #3b82f6;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 1.8rem;
+            cursor: pointer;
+            z-index: 1100;
+        }
+        .whatsapp-float {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #25D366;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            text-decoration: none;
+            z-index: 1100;
+        }
+        .chatbot-window {
+            position: fixed;
+            bottom: 150px;
+            left: 20px;
+            width: 300px;
+            background: #1e293b;
+            border-radius: 20px;
+            z-index: 1200;
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .chatbot-window:not(.hidden) { display: flex; }
+        .chatbot-header { background: #3b82f6; padding: 12px; display: flex; justify-content: space-between; }
+        .chatbot-messages { height: 250px; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .bot-msg, .user-msg { max-width: 85%; padding: 8px 12px; border-radius: 18px; font-size: 0.85rem; }
+        .bot-msg { background: #334155; align-self: flex-start; }
+        .user-msg { background: #3b82f6; align-self: flex-end; }
+        .chatbot-input { display: flex; padding: 8px; background: #0f172a; }
+        .chatbot-input input { flex: 1; padding: 8px; border-radius: 40px; border: none; background: #1e293b; color: white; }
+        .chatbot-input button { background: #3b82f6; border: none; border-radius: 40px; padding: 0 12px; margin-left: 6px; color: white; cursor: pointer; }
+        .legal-note { font-size: 0.65rem; text-align: center; margin-top: 20px; opacity: 0.6; }
+        @media (max-width: 640px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .flex { flex-direction: column; }
+            .sidebar { width: 80%; }
+        }
+    </style>
+</head>
+<body>
+    <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+    <div class="sidebar" id="sidebar">
+        <h3 style="text-align:center; margin-bottom:20px;"><i class="fas fa-city"></i> Smart Trade City</h3>
+        <a href="#" data-tab="market"><i class="fas fa-chart-line"></i> السوق العالمي</a>
+        <a href="#" data-tab="social"><i class="fas fa-comments"></i> التواصل الاجتماعي</a>
+        <a href="#" data-tab="escrow"><i class="fas fa-handshake"></i> عقود الضمان</a>
+        <a href="#" data-tab="payments"><i class="fas fa-credit-card"></i> دفع Pi</a>
+        <a href="#" data-tab="analytics"><i class="fas fa-chart-pie"></i> تحليلات Pi</a>
+        <a href="#" data-tab="wallet"><i class="fas fa-wallet"></i> محفظتي</a>
+        <a href="#" data-tab="friends"><i class="fas fa-user-friends"></i> الأصدقاء</a>
+        <a href="#" data-tab="messages"><i class="fas fa-envelope"></i> الرسائل</a>
+        <a href="#" data-tab="notifications"><i class="fas fa-bell"></i> الإشعارات</a>
+        <a href="#" data-tab="profile"><i class="fas fa-user-circle"></i> ملفي الشخصي</a>
+        <a href="#" data-tab="security"><i class="fas fa-shield-alt"></i> الأمان</a>
+        <a href="#" data-tab="language"><i class="fas fa-language"></i> اللغة</a>
+        <a href="#" data-tab="faq"><i class="fas fa-question-circle"></i> الأسئلة الشائعة</a>
+        <a href="#" data-tab="legal"><i class="fas fa-gavel"></i> الشروط والأحكام</a>
+        <hr style="margin: 15px 0; border-color: #334155;">
+        <a href="#" id="logoutSide"><i class="fas fa-sign-out-alt"></i> تسجيل خروج</a>
+    </div>
+
+    <div class="app-container">
+        <h1>🏙️ Smart Trade City</h1>
+        <div id="authSection">
+            <button id="loginBtn" class="btn"><i class="fab fa-pi"></i> تسجيل الدخول عبر Pi</button>
+            <div id="userInfo" class="hidden">
+                <p>مرحباً، <span id="username"></span></p>
+                <button id="logoutBtn" class="btn small">تسجيل خروج</button>
+            </div>
+        </div>
+        <div id="appContent" class="hidden">
+            <div class="stats-grid">
+                <div class="card balance-card">
+                    <h3><i class="fas fa-coins"></i> رصيدي</h3>
+                    <p id="balance">0 π</p>
+                    <button id="topupBtn" class="btn small test-btn"><i class="fas fa-plus-circle"></i> رصيد تجريبي +50</button>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-chart-line"></i> إحصائيات المدينة</h3>
+                    <div class="stats-row" style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                        <span><i class="fas fa-store"></i> تجار: <span id="statMerchants">0</span></span>
+                        <span><i class="fas fa-users"></i> مستخدمين: <span id="statUsers">0</span></span>
+                        <span><i class="fas fa-exchange-alt"></i> تداولات: <span id="statTrades">0</span></span>
+                        <span><i class="fas fa-globe"></i> دول: <span id="statCountries">0</span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="market"><i class="fas fa-chart-simple"></i> السوق</button>
+                <button class="tab-btn" data-tab="social"><i class="fas fa-comments"></i> تواصل</button>
+                <button class="tab-btn" data-tab="escrow"><i class="fas fa-handshake"></i> عقود</button>
+                <button class="tab-btn" data-tab="payments"><i class="fas fa-credit-card"></i> دفع</button>
+                <button class="tab-btn" data-tab="analytics"><i class="fas fa-brain"></i> تحليلات</button>
+            </div>
+
+            <!-- تبويب السوق -->
+            <div id="market-tab" class="tab-content active">
+                <div class="card">
+                    <h3><i class="fas fa-chart-line"></i> السوق العالمي <span class="live-badge" style="background:#ef4444; font-size:0.6rem; padding:2px 8px; border-radius:20px;">LIVE</span></h3>
+                    <div id="marketList"></div>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-arrows-spin"></i> تداول سريع | <i class="fas fa-shield"></i> Escrow</h3>
+                    <select id="assetSelect"><option>Pi/USDT</option><option>STC/π</option><option>GC/π</option></select>
+                    <input type="number" id="amount" placeholder="الكمية">
+                    <div class="flex">
+                        <button id="buyBtn" class="btn buy">شراء</button>
+                        <button id="sellBtn" class="btn sell">بيع</button>
+                    </div>
+                    <p id="tradeMsg"></p>
+                </div>
+            </div>
+
+            <!-- تبويب التواصل -->
+            <div id="social-tab" class="tab-content hidden">
+                <div class="card">
+                    <textarea id="postContent" rows="3" placeholder="ماذا يحدث في مدينتك؟..."></textarea>
+                    <button id="postBtn" class="btn small"><i class="fas fa-paper-plane"></i> نشر</button>
+                    <div id="feed" style="margin-top:15px;"></div>
+                </div>
+                <div class="card">
+                    <h3>المتداولون النشطون</h3>
+                    <div id="onlineUsers"></div>
+                </div>
+            </div>
+
+            <!-- تبويب عقود الضمان -->
+            <div id="escrow-tab" class="tab-content hidden">
+                <div class="card">
+                    <button id="createEscrowBtn" class="btn"><i class="fas fa-plus"></i> إنشاء عقد ضمان جديد</button>
+                    <div id="escrowList" style="margin-top:15px;"></div>
+                </div>
+            </div>
+
+            <!-- تبويب دفع Pi -->
+            <div id="payments-tab" class="tab-content hidden">
+                <div class="card">
+                    <input type="text" id="payeeId" placeholder="معرف المستلم (UID أو اسم المستخدم)">
+                    <input type="number" id="payAmount" placeholder="المبلغ (π)">
+                    <input type="text" id="payMemo" placeholder="السبب (اختياري)">
+                    <button id="sendPaymentBtn" class="btn pi-btn"><i class="fab fa-pi"></i> إرسال الدفع</button>
+                    <p id="payStatus"></p>
+                </div>
+                <div class="card">
+                    <h3>سجل المعاملات</h3>
+                    <div id="transactionsList"></div>
+                </div>
+            </div>
+
+            <!-- تبويب تحليلات Pi -->
+            <div id="analytics-tab" class="tab-content hidden">
+                <div class="card">
+                    <h3><i class="fas fa-chart-pie"></i> تحليلات شبكة Pi</h3>
+                    <canvas id="piChart" width="300" height="200" style="width:100%; max-width:300px; margin:auto; display:block;"></canvas>
+                    <div id="piNews" class="news-ticker" style="margin-top:15px; background:#0f172a; padding:10px; border-radius:20px;"></div>
+                </div>
+            </div>
+        </div>
+        <div class="legal-note">⚠️ إخلاء مسؤولية: هذا التطبيق تجريبي تعليمي على Testnet. جميع العمليات محاكاة. أنت توافق على استخدامه على مسؤوليتك الكاملة.</div>
+    </div>
+
+    <button id="chatbotToggle" class="chatbot-toggle"><i class="fas fa-robot"></i></button>
+    <div id="chatbotWindow" class="chatbot-window hidden">
+        <div class="chatbot-header"><span><i class="fas fa-headset"></i> مساعد المدينة الذكي</span><button id="chatbotClose"><i class="fas fa-times"></i></button></div>
+        <div id="chatbotMessages" class="chatbot-messages"><div class="bot-msg">👋 مرحباً! كيف يمكنني مساعدتك؟<br>جرب: الأسعار، شراء، إسكرو، دفع</div></div>
+        <div class="chatbot-input"><input type="text" id="chatbotInput" placeholder="اكتب سؤالك..."><button id="chatbotSend"><i class="fas fa-paper-plane"></i></button></div>
+    </div>
+    <a href="https://wa.me/966500000000?text=مرحباً،%20أحتاج%20مساعدة%20في%20Smart%20Trade%20City" id="whatsappBtn" class="whatsapp-float" target="_blank"><i class="fab fa-whatsapp"></i></a>
+
+    <script>
+        // ===================== البيانات الأساسية =====================
+        let currentUser = null;
+        let userBalance = 125.5;
+        let tradesCount = 0;
+        let cityStats = { merchants: 1247, users: 8942, countries: 89 };
+        let posts = [];
+        let escrows = [];
+        let transactions = [];
+        let onlineUsersList = ['تاجر_π', 'مدينة_ذكية', 'مستثمر1', 'PiMaster'];
+
+        const marketPrices = { "Pi/USDT": 45.80, "STC/π": 0.012, "GC/π": 0.87 };
+
+        // ===================== دوال مساعدة =====================
+        function showNotification(msg, isError = false) {
+            const div = document.createElement('div');
+            div.innerText = msg;
+            div.style.position = 'fixed';
+            div.style.bottom = '80px';
+            div.style.left = '20px';
+            div.style.right = '20px';
+            div.style.backgroundColor = isError ? '#ef4444' : '#10b981';
+            div.style.color = 'white';
+            div.style.padding = '12px';
+            div.style.borderRadius = '40px';
+            div.style.textAlign = 'center';
+            div.style.zIndex = '9999';
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 3000);
+        }
+
+        function updateUI() {
+            document.getElementById('balance').innerText = userBalance.toFixed(2) + ' π';
+            document.getElementById('statMerchants').innerText = cityStats.merchants;
+            document.getElementById('statUsers').innerText = cityStats.users;
+            document.getElementById('statTrades').innerText = tradesCount;
+            document.getElementById('statCountries').innerText = cityStats.countries;
+            // تحديث السوق
+            const marketDiv = document.getElementById('marketList');
+            if (marketDiv) {
+                marketDiv.innerHTML = '';
+                for (let [symbol, price] of Object.entries(marketPrices)) {
+                    const change = (Math.random() * 6 - 3).toFixed(1);
+                    const changeClass = change >= 0 ? '#4ade80' : '#f87171';
+                    marketDiv.innerHTML += `<div class="market-item"><span>${symbol}</span><span>${price}</span><span style="color:${changeClass}">${change}%</span></div>`;
+                }
+            }
+            // عرض المنشورات
+            const feedDiv = document.getElementById('feed');
+            if (feedDiv) {
+                feedDiv.innerHTML = '';
+                posts.slice().reverse().forEach(p => {
+                    feedDiv.innerHTML += `<div class="card" style="margin:10px 0; padding:10px;"><strong>${escapeHtml(p.user)}</strong><p>${escapeHtml(p.content)}</p><small>${p.time}</small></div>`;
+                });
+            }
+            // عرض العقود
+            const escrowDiv = document.getElementById('escrowList');
+            if (escrowDiv) {
+                escrowDiv.innerHTML = '';
+                escrows.forEach(e => {
+                    escrowDiv.innerHTML += `<div class="card" style="margin:10px 0;"><strong>عقد #${e.id}</strong><br>المبلغ: ${e.amount} π<br>البائع: ${e.seller}<br>المشتري: ${e.buyer}<br>الحالة: ${e.status}</div>`;
+                });
+            }
+            // عرض المعاملات
+            const transDiv = document.getElementById('transactionsList');
+            if (transDiv) {
+                transDiv.innerHTML = '';
+                transactions.slice().reverse().forEach(t => {
+                    transDiv.innerHTML += `<div class="card" style="margin:5px 0; padding:8px;"><small>${t.date}</small><br>💰 ${t.amount} π - ${t.memo} <span style="color:#10b981;">✓ ${t.status}</span></div>`;
+                });
+            }
+            // عرض المستخدمين النشطين
+            const onlineDiv = document.getElementById('onlineUsers');
+            if (onlineDiv) {
+                onlineDiv.innerHTML = onlineUsersList.map(u => `<span style="display:inline-block; background:#1e293b; border-radius:40px; padding:4px 12px; margin:4px;"><i class="fas fa-circle" style="color:#10b981; font-size:0.6rem;"></i> ${u}</span>`).join('');
+            }
+        }
+
+        function escapeHtml(str) { return str.replace(/[&<>]/g, function(m) { if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+        // ===================== المصادقة =====================
+        async function handleLogin() {
+            if (!window.Pi) { alert("الرجاء فتح التطبيق داخل متصفح Pi"); return; }
+            Pi.authenticate(["username"], (err, auth) => {
+                if (err) { alert("فشل المصادقة: " + err.message); return; }
+                currentUser = { uid: auth.user.uid, username: auth.user.username || "متداول" };
+                document.getElementById('username').innerText = currentUser.username;
+                document.getElementById('authSection').classList.add('hidden');
+                document.getElementById('appContent').classList.remove('hidden');
+                showNotification(`مرحباً ${currentUser.username}`);
+                updateUI();
+            });
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('authSection').classList.remove('hidden');
+            document.getElementById('appContent').classList.add('hidden');
+            showNotification("تم تسجيل الخروج");
+        }
+
+        // ===================== التداول =====================
+        function buy() {
+            if (!currentUser) { showNotification("سجل دخول أولاً", true); return; }
+            const asset = document.getElementById('assetSelect').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (isNaN(amount) || amount <= 0) { showNotification("كمية غير صحيحة", true); return; }
+            const price = marketPrices[asset];
+            const cost = amount * price;
+            if (userBalance >= cost) {
+                userBalance -= cost;
+                tradesCount++;
+                showNotification(`تم شراء ${amount} من ${asset} بـ ${cost.toFixed(2)} π (Escrow مؤقت)`);
+                updateUI();
+            } else { showNotification("رصيد غير كافٍ", true); }
+            document.getElementById('amount').value = '';
+        }
+
+        function sell() {
+            if (!currentUser) { showNotification("سجل دخول أولاً", true); return; }
+            const asset = document.getElementById('assetSelect').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+            if (isNaN(amount) || amount <= 0) { showNotification("كمية غير صحيحة", true); return; }
+            const price = marketPrices[asset];
+            const revenue = amount * price;
+            userBalance += revenue;
+            tradesCount++;
+            showNotification(`تم بيع ${amount} من ${asset} مقابل ${revenue.toFixed(2)} π`);
+            updateUI();
+            document.getElementById('amount').value = '';
+        }
+
+        function addTestBalance() {
+            if (!currentUser) { showNotification("سجل دخول أولاً", true); return; }
+            userBalance += 50;
+            updateUI();
+            showNotification("تم إضافة 50 π تجريبي");
+        }
+
+        // ===================== دفع Pi =====================
+        async function sendPayment() {
+            if (!currentUser) { showNotification("سجل دخول أولاً", true); return; }
+            const amount = parseFloat(document.getElementById('payAmount').value);
+            const memo = document.getElementById('payMemo').value || "دفع عبر Smart Trade City";
+            if (isNaN(amount) || amount <= 0) { showNotification("مبلغ غير صحيح", true); return; }
+            if (!window.Pi) { showNotification("Pi SDK غير جاهز", true); return; }
+            Pi.createPayment({ amount: amount, memo: memo, metadata: {} }, {
+                onReadyForServerApproval: (id) => { document.getElementById('payStatus').innerText = "بانتظار الموافقة..."; },
+                onReadyForServerCompletion: (id) => {
+                    document.getElementById('payStatus').innerText = `✅ تم إرسال ${amount} π بنجاح!`;
+                    transactions.unshift({ id: id, amount: amount, memo: memo, date: new Date().toLocaleString(), status: "مكتمل" });
+                    if (userBalance >= amount) userBalance -= amount;
+                    updateUI();
+                    showNotification(`تم إرسال ${amount} π`);
+                },
+                onCancel: () => { document.getElementById('payStatus').innerText = "❌ تم إلغاء الدفع"; },
+                onError: (err) => { console.error(err); document.getElementById('payStatus').innerText = "خطأ في الدفع"; }
+            });
+        }
+
+        // ===================== التواصل =====================
+        function addPost() {
+            if (!currentUser) { showNotification("سجل دخول أولاً", true); return; }
+            const content = document.getElementById('postContent').value.trim();
+            if (!content) return;
+            posts.push({ user: currentUser.username, content: content, time: new Date().toLocaleString() });
+            document.getElementById('postContent').value = '';
+            updateUI();
+            showNotification("تم نشر مشاركتك");
+        }
+
+        // ===================== عقود الضمان =====================
+        function createEscrow() {
+            if (!currentUser) { showNotification("سجل دخول أولاً", true); return; }
+            const id = Date.now();
+            escrows.push({ id: id, buyer: currentUser.username, seller: "بائع تجريبي", amount: 10, status: "قيد الانتظار" });
+            updateUI();
+            showNotification("تم إنشاء عقد ضمان جديد");
+        }
+
+        // ===================== بوت المحادثة =====================
+        const botResponses = {
+            "الأسعار": "📈 الأسعار الحالية:\nPi/USDT: 45.80\nSTC/π: 0.012\nGC/π: 0.87",
+            "شراء": "🟢 للشراء: اختر الأصل، أدخل الكمية، ثم اضغط 'شراء'. يتم التحويل عبر Escrow.",
+            "بيع": "🔴 للبيع: اختر الأصل، أدخل الكمية، ثم اضغط 'بيع'.",
+            "إسكرو": "⚖️ عقود الضمان تحمي أموالك حتى اكتمال الصفقة.",
+            "دفع": "💳 استخدم تبويب 'دفع Pi' لإرسال π إلى أي مستخدم.",
+            "تواصل": "📞 يمكنك التواصل عبر واتساب (الزر الأخضر) أو البريد الإلكتروني support@smarttrade.city",
+            "مساعدة": "❓ اكتب 'الأسعار'، 'شراء'، 'بيع'، 'إسكرو'، 'دفع'، 'تواصل'"
+        };
+        function getBotReply(msg) {
+            const lower = msg.toLowerCase();
+            for (let [key, reply] of Object.entries(botResponses)) {
+                if (lower.includes(key)) return reply;
+            }
+            return "🤖 هذا السؤال خارج نطاق معرفتي حالياً. يُرجى التواصل عبر واتساب.";
+        }
+        function addChatMessage(text, isUser) {
+            const container = document.getElementById('chatbotMessages');
+            const div = document.createElement('div');
+            div.className = isUser ? 'user-msg' : 'bot-msg';
+            div.innerText = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // ===================== تحليلات Pi (محاكاة) =====================
+        function drawPiChart() {
+            const canvas = document.getElementById('piChart');
+            if (!canvas || !canvas.getContext) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = 300; canvas.height = 200;
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, 300, 200);
+            ctx.fillStyle = '#facc15';
+            for (let i=0; i<6; i++) {
+                const height = 30 + Math.random() * 100;
+                ctx.fillRect(40 + i*40, 200-height, 25, height);
+            }
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px Arial';
+            ctx.fillText('Pi Network Activity', 100, 20);
+        }
+        function loadPiNews() {
+            const newsDiv = document.getElementById('piNews');
+            if (newsDiv) {
+                newsDiv.innerHTML = '<marquee behavior="scroll" direction="right">📰 Pi Network تعلن عن تحديثات جديدة قريباً | 💰 عدد المستخدمين يتجاوز 50 مليون | 🔥 قريباً: إطلاق تطبيقات لامركزية</marquee>';
+            }
+        }
+
+        // ===================== التبويبات والقائمة الجانبية =====================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.tab-btn[data-tab="${tabId}"]`).classList.add('active');
+            if (tabId === 'analytics') { drawPiChart(); loadPiNews(); }
+        }
+
+        // ===================== ربط الأحداث =====================
+        document.getElementById('loginBtn').onclick = handleLogin;
+        document.getElementById('logoutBtn').onclick = logout;
+        document.getElementById('logoutSide').onclick = logout;
+        document.getElementById('buyBtn').onclick = buy;
+        document.getElementById('sellBtn').onclick = sell;
+        document.getElementById('topupBtn').onclick = addTestBalance;
+        document.getElementById('sendPaymentBtn').onclick = sendPayment;
+        document.getElementById('postBtn').onclick = addPost;
+        document.getElementById('createEscrowBtn').onclick = createEscrow;
+
+        // القائمة الجانبية
+        const sidebar = document.getElementById('sidebar');
+        document.getElementById('menuToggle').onclick = () => sidebar.classList.toggle('open');
+        document.querySelectorAll('.sidebar a[data-tab]').forEach(link => {
+            link.onclick = (e) => {
+                e.preventDefault();
+                const tabId = link.getAttribute('data-tab');
+                switchTab(tabId);
+                sidebar.classList.remove('open');
+            };
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.onclick = () => switchTab(btn.getAttribute('data-tab'));
+        });
+
+        // بوت المحادثة
+        const chatWin = document.getElementById('chatbotWindow');
+        document.getElementById('chatbotToggle').onclick = () => { chatWin.classList.toggle('hidden'); if (!chatWin.classList.contains('hidden')) chatWin.style.display = 'flex'; else chatWin.style.display = 'none'; };
+        document.getElementById('chatbotClose').onclick = () => { chatWin.classList.add('hidden'); chatWin.style.display = 'none'; };
+        document.getElementById('chatbotSend').onclick = () => {
+            const input = document.getElementById('chatbotInput');
+            const msg = input.value.trim();
+            if (!msg) return;
+            addChatMessage(msg, true);
+            setTimeout(() => addChatMessage(getBotReply(msg), false), 500);
+            input.value = '';
+        };
+        document.getElementById('chatbotInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') document.getElementById('chatbotSend').click(); });
+
+        // تحديث تلقائي للأسعار
+        setInterval(() => {
+            if (currentUser) updateUI();
+        }, 5000);
+
+        updateUI();
+        drawPiChart();
+        loadPiNews();
+        console.log("✅ التطبيق الكامل جاهز");
+    </script>
+</body>
+</html>
